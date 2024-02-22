@@ -323,7 +323,6 @@ impl TopicCache {
         .wrapping_sub(self.max_keep_samples as usize),
     );
 
-    let max_remove_count = min_remove_count;
     // Only observe max cache size
     // TODO: Can we do better without being able to distinguish between instances?
 
@@ -332,11 +331,8 @@ impl TopicCache {
     let split_key = *self
       .changes
       .keys()
-      .take(max_remove_count)
       .enumerate()
-      .skip_while(|(i, ts)| {
-        *i < min_remove_count || (**ts < remove_before && *i < max_remove_count)
-      })
+      .skip_while(|(i, _)| *i < min_remove_count)
       .map(|(_, ts)| ts) // un-enumerate
       .next() // the next element would be the first to retain
       .unwrap_or(&Timestamp::ZERO); // if there is no next, then everything from ZERO onwards

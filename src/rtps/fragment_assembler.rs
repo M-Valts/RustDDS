@@ -20,7 +20,7 @@ use crate::{
 };
 
 // This is for the assembly of a single object
-struct AssemblyBuffer {
+pub(crate) struct AssemblyBuffer {
   buffer_bytes: BytesMut,
   fragment_count: usize,
   received_bitmap: BitVec,
@@ -28,7 +28,7 @@ struct AssemblyBuffer {
   #[allow(dead_code)] // TODO: Purpose is to use this later for e.g.
   // garbage collection, in case some buffer is not completed within reasonable time.
   created_time: Timestamp,
-  modified_time: Timestamp,
+  pub modified_time: Timestamp,
 }
 
 impl AssemblyBuffer {
@@ -144,7 +144,7 @@ impl AssemblyBuffer {
 // So there is only one sequence of SNs
 pub(crate) struct FragmentAssembler {
   fragment_size: u16, // number of bytes per fragment. Each writer must select one constant value.
-  assembly_buffers: BTreeMap<SequenceNumber, AssemblyBuffer>,
+  pub assembly_buffers: BTreeMap<SequenceNumber, AssemblyBuffer>,
 }
 
 impl fmt::Debug for FragmentAssembler {
