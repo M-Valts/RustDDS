@@ -52,6 +52,7 @@ use crate::{
     sequence_number::{FragmentNumber, FragmentNumberSet, SequenceNumber, SequenceNumberSet},
     time::Timestamp,
   },
+  Duration,
 };
 #[cfg(feature = "security")]
 use super::Submessage;
@@ -644,12 +645,25 @@ impl Reader {
   }
 
   fn garbage_collect_fragments(&mut self) {
-    // TODO: On most calls, do nothing.
-    //
-    // If GC time/packet limit has been exceeded, iterate through
-    // fragment assemblers and discard those assembly buffers whose
-    // creation / modification timestamps look like it is no longer receiving
-    // data and can therefore be discarded.
+    let mut to_remove = vec![];
+    let now = Timestamp::now();
+    let max_duration = Duration::from_secs(1);
+    for (writer_sn, f) in self.fragment_assemblers.iter() {
+      for (seq, a) in f.assembly_buffers.iter() {
+        if !a.is_complete() && now.duration_since(a.modified_time) > max_duration {
+          to_remove.push((*writer_sn, *seq));
+        }
+      }
+    }
+
+    for (writer_sn, seq) in to_remove {
+      self
+        .fragment_assemblers
+        .get_mut(&writer_sn)
+        .unwrap()
+        .assembly_buffers
+        .remove(&seq);
+    }
   }
 
   fn missing_frags_for(
